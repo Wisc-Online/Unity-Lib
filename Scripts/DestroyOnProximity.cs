@@ -4,24 +4,23 @@ using UnityEngine;
 
 namespace FVTC.LearningInnovations.Unity
 {
-    public class DestroyOnProximity : MonoBehaviour
+    /// <summary>
+    /// Destroys the Game Object when it comes within the specified distance to
+    /// a specified target Game Object
+    /// </summary>
+    public class DestroyOnProximity : OnProximityBase
     {
-
-        [SerializeField]
-        public float destroyThreshold = float.Epsilon;
-
-        [SerializeField]
-        public GameObject target;
-
-        private void Update()
+        protected override bool IsValid
         {
-            if (target != null)
+            get
             {
-                var d = this.transform.position - target.transform.position;
-
-                if (d.magnitude <= destroyThreshold)
-                    Destroy(gameObject);
+                return true;
             }
+        }
+
+        protected override void Execute()
+        {
+            Destroy(gameObject);
         }
     }
 

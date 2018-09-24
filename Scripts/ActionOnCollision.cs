@@ -4,21 +4,23 @@ using UnityEngine.EventSystems;
 
 namespace FVTC.LearningInnovations.Unity
 {
-    [RequireComponent(typeof(Collider))]
-    public class ActionOnCollision : MonoBehaviour
+    
+    public class ActionOnCollision : OnCollissionBase
     {
-        public bool anyTarget = false;
-        public Collider target;
-
         [SerializeField]
         public UnityEvent Actions;
 
-        private void OnCollisionEnter(Collision collision)
+        protected override bool IsValid
         {
-            if ((anyTarget || collision.collider == target) && Actions != null)
+            get
             {
-                Actions.Invoke();
+                return Actions != null;
             }
+        }
+
+        protected override void Execute()
+        {
+            Actions.Invoke();
         }
     }
 }

@@ -2,20 +2,19 @@
 
 namespace FVTC.LearningInnovations.Unity
 {
-    [RequireComponent(typeof(Collider))]
-    public class DestroyOnCollision : MonoBehaviour
+    public class DestroyOnCollision : OnCollissionBase
     {
-        public bool anyTarget = false;
-        public Collider target;
-
-
-        private void OnCollisionEnter(Collision collision)
+        protected override bool IsValid
         {
-            if (anyTarget || collision.collider == target)
+            get
             {
-                Destroy(gameObject);
+                return true;
             }
         }
-    }
 
+        protected override void Execute()
+        {
+            Destroy(this.gameObject);
+        }
+    }
 }
