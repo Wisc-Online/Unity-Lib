@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace FVTC.LearningInnovations.Unity.Helpers
 {
@@ -13,10 +14,24 @@ namespace FVTC.LearningInnovations.Unity.Helpers
             return Start(path, null);
         }
 
-        public static Process Start(string path, string arguments)
+        public static Process Start(string path, string arguments) {
+            return Start(path, arguments, _debugLogMessage);
+        }
+
+        public static Process Start(string path, string arguments, Action<string> stdOutCallback)
+        {
+            return Start(path, arguments, stdOutCallback, _debugLogError);
+        }
+
+        static Action<string> _debugLogError = str => UnityEngine.Debug.LogError(str);
+        static Action<string> _debugLogMessage = str => UnityEngine.Debug.Log(str);
+
+        public static Process Start(string path, string arguments, Action<string> stdOutCallback, Action<string> stdErrCallback)
         {
             var process = Process.Start(new ProcessStartInfo
             {
+                FileName = path,
+                WorkingDirectory = System.IO.Directory.GetParent(Application.dataPath).FullName,
                 UseShellExecute = false,
                 Arguments = arguments,
                 RedirectStandardError = true,
@@ -24,29 +39,43 @@ namespace FVTC.LearningInnovations.Unity.Helpers
                 CreateNoWindow = true
             });
 
-            process.OutputDataReceived += (sender, e) =>
+            if (stdOutCallback != null)
             {
-                UnityEngine.Debug.LogWarning(e.Data);
-            };
+                string stdOut;
 
-            process.ErrorDataReceived += (sender, e) =>
+                while((stdOut = process.StandardOutput.ReadLine()) != null)
+                {
+                    stdOutCallback(stdOut);
+                }
+            }
+
+            if (stdErrCallback != null)
             {
-                UnityEngine.Debug.LogError(e.Data);
-            };
+                string stdOut;
+
+                while ((stdOut = process.StandardError.ReadLine()) != null)
+                {
+                    stdErrCallback(stdOut);
+                }
+            }
 
             return process;
         }
 
-        public static void StartAndWaitForExit(string path)
+        public static bool StartAndWaitForExit(string path)
         {
-            StartAndWaitForExit(path, null);
+            return StartAndWaitForExit(path, null);
         }
 
-        public static void StartAndWaitForExit(string path, string arguments)
+        const int EXIT_CODE_SUCCESS = 0;
+
+        public static bool StartAndWaitForExit(string path, string arguments)
         {
             using (var process = Start(path, arguments))
             {
                 process.WaitForExit();
+
+                return process.ExitCode == EXIT_CODE_SUCCESS;
             }
         }
 

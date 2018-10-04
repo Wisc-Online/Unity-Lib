@@ -35,12 +35,69 @@ namespace FVTC.LearningInnovations.Unity.Helpers
                     {
                         var dotGitDir = projectDir.GetDirectories(".git");
 
-                        return dotGitDir == null || dotGitDir.Length == 0;
+                        return dotGitDir != null && dotGitDir.Length == 1 && dotGitDir[0].Exists;
                     }
                 }
 
                 return false;
             }
+        }
+
+        public static void AddModule(DirectoryInfo directory, Uri uri)
+        {
+            ProcessHelper.StartAndWaitForExit(GetGitPath(), string.Format("submodule add {0} {1}", uri, directory));
+        }
+
+        public static Module[] GetModules()
+        {
+            var gitModulesFile = new FileInfo(Path.Combine(Directory.GetParent(Application.dataPath).FullName, ".gitmodules"));
+
+            List<Module> modules = new List<Module>();
+
+            if (gitModulesFile.Exists)
+            {
+                Module module = null;
+
+                using (var reader = gitModulesFile.OpenText())
+                {
+                    string line;
+                    string[] lineParts;
+
+                    const string subModulePrefix = "[submodule ";
+
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.StartsWith(subModulePrefix))
+                        {
+                            module = new Module
+                            {
+                                Name = line.Substring(subModulePrefix.Length + 1).TrimEnd(']', '"')
+                            };
+
+                            modules.Add(module);
+                        }
+                        else if (module != null) 
+                        {
+                            lineParts = line.Split(new char[] { '=' }, 2).Select(p => p.Trim()).ToArray();
+
+                            if (lineParts.Length == 2)
+                            {
+                                switch (lineParts[0])
+                                {
+                                    case "path":
+                                        module.Path = lineParts[1];
+                                        break;
+                                    case "url":
+                                        module.Url = new Uri(lineParts[1]);
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return modules.ToArray();
         }
 
         public static void Initalize()
@@ -66,6 +123,13 @@ namespace FVTC.LearningInnovations.Unity.Helpers
         public static string GetGitPath()
         {
             return EnvironmentHelpers.GetExecutablePath("git.exe");
+        }
+
+        public class Module
+        {
+            public string Name { get; set; }
+            public string Path { get; set; }
+            public Uri Url { get; set; }
         }
     }
 }

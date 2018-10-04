@@ -1,7 +1,9 @@
 ﻿using FVTC.LearningInnovations.Unity.Helpers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,16 +12,39 @@ namespace FVTC.LearningInnovations.Unity.Editor
     public class InstallSubmodules
     {
 
-        [MenuItem("FVTC/Learning Innovations/Install Submodule/Mixed Reality")]
-        private static void InstallMixedRealitySubmodule()
-        {
+        static readonly Uri UNITY_LIB_MR_URL = new Uri("https://github.com/Wisc-Online/Unity-Lib-MR.git");
+        const string UNITY_LIB_MR_PATH = "FVTC/LearningInnovations-MR";
 
+        [MenuItem("FVTC/Learning Innovations/Install Submodule/Mixed Reality")]
+        static void InstallMixedRealitySubmodule()
+        {
+            if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
+            {
+                DirectoryInfo dir = new DirectoryInfo(Path.Combine(Application.dataPath, UNITY_LIB_MR_PATH));
+
+                GitHelper.AddModule(dir, UNITY_LIB_MR_URL);
+            }
+        }
+
+        [MenuItem("FVTC/Learning Innovations/Install Submodule/Mixed Reality", true)]
+        bool ValidateInstallMixedRealitySubmodule()
+        {
+            bool canRun = false;
+
+            if (GitHelper.IsProjectGitRepository)
+            {
+                var modules = GitHelper.GetModules();
+
+                canRun = !modules.Any(m => m.Url == UNITY_LIB_MR_URL);
+            }
+
+            return canRun;
         }
 
 
         [MenuItem("FVTC/Learning Innovations/Git/Initialize New Repository")]
-        private static void InitializeGitRepository()
-        {       
+        static void InitializeGitRepository()
+        {
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled() && !GitHelper.IsProjectGitRepository)
             {
                 GitHelper.Initalize();
@@ -27,7 +52,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
         [MenuItem("FVTC/Learning Innovations/Git/Initialize New Repository", true)]
-        private static bool InitializeGitRepositoryValidation()
+        static bool ValidateInitializeGitRepository()
         {
             return !GitHelper.IsProjectGitRepository;
         }
