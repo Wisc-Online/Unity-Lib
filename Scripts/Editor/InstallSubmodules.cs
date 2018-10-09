@@ -15,7 +15,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
         static readonly Uri UNITY_LIB_MR_URL = new Uri("https://github.com/Wisc-Online/Unity-Lib-MR.git");
         const string UNITY_LIB_MR_PATH = "FVTC/LearningInnovations-MR";
 
-        [MenuItem("FVTC/Learning Innovations/Install Submodule/Mixed Reality")]
+        [MenuItem("Learning Innovations/Install Submodule/Mixed Reality")]
         static void InstallMixedRealitySubmodule()
         {
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
@@ -26,8 +26,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        [MenuItem("FVTC/Learning Innovations/Install Submodule/Mixed Reality", true)]
-        bool ValidateInstallMixedRealitySubmodule()
+        [MenuItem("Learning Innovations/Install Submodule/Mixed Reality", true)]
+        static bool ValidateInstallMixedRealitySubmodule()
         {
             bool canRun = false;
 
@@ -42,7 +42,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
 
-        [MenuItem("FVTC/Learning Innovations/Git/Initialize New Repository")]
+        [MenuItem("Learning Innovations/Git/Initialize New Repository")]
         static void InitializeGitRepository()
         {
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled() && !GitHelper.IsProjectGitRepository)
@@ -51,7 +51,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        [MenuItem("FVTC/Learning Innovations/Git/Initialize New Repository", true)]
+        [MenuItem("Learning Innovations/Git/Initialize New Repository", true)]
         static bool ValidateInitializeGitRepository()
         {
             return !GitHelper.IsProjectGitRepository;
