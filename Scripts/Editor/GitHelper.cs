@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FVTC.LearningInnovations.Unity.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,7 +8,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace FVTC.LearningInnovations.Unity.Helpers
+namespace FVTC.LearningInnovations.Unity.Editor
 {
     public static class GitHelper
     {

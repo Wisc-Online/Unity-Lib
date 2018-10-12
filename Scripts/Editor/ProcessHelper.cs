@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-namespace FVTC.LearningInnovations.Unity.Helpers
+namespace FVTC.LearningInnovations.Unity.Editor
 {
     public static class ProcessHelper
     {

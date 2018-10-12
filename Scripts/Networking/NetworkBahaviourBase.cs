@@ -9,8 +9,6 @@ namespace FVTC.LearningInnovations.Unity.Networking
 {
     public abstract class NetworkBahaviourBase : NetworkBehaviour , IBehaviour
     {
-
-
         public virtual void Awake()
         {
             OnAwake();
@@ -57,5 +55,6 @@ namespace FVTC.LearningInnovations.Unity.Networking
         public virtual void OnUpdate()
         {
         }
+
     }
 }
