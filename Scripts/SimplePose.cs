@@ -7,22 +7,21 @@ using UnityEngine;
 
 namespace FVTC.LearningInnovations.Scripts.Unity
 {
+    [Serializable]
     public struct SimplePose
     {
         public SimplePose(Vector3 position, Quaternion rotation)
         {
-            this._position = position;
-            this._rotation = rotation;
+            this.Position = position;
+            this.Rotation = rotation;
         }
 
         [SerializeField]
-        private Vector3 _position;
+        public readonly Vector3 Position;
 
         [SerializeField]
-        private Quaternion _rotation;
+        public readonly Quaternion Rotation;
         
-        public Vector3 Position { get { return _position; } }
-        public Quaternion Rotation { get { return _rotation; } }
 
         //  User-defined conversion from double to Digit
         public static implicit operator SimplePose(Pose p)
