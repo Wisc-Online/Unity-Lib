@@ -33,27 +33,27 @@ namespace FVTC.LearningInnovations.Unity
             OnStart();
         }
 
-        public void OnAwake()
+        public virtual void OnAwake()
         {
             
         }
 
-        public void OnFixedUpdate()
+        public virtual void OnFixedUpdate()
         {
             
         }
 
-        public void OnLateUpdate()
+        public virtual void OnLateUpdate()
         {
             
         }
 
-        public void OnStart()
+        public virtual void OnStart()
         {
             
         }
 
-        public void OnUpdate()
+        public virtual void OnUpdate()
         {
             
         }
