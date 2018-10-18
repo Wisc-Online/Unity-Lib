@@ -13,16 +13,14 @@ namespace FVTC.LearningInnovations.Unity.Editor
     {
 
         static readonly Uri UNITY_LIB_MR_URL = new Uri("https://github.com/Wisc-Online/Unity-Lib-MR.git");
-        const string UNITY_LIB_MR_PATH = "FVTC/LearningInnovations-MR";
+        const string UNITY_LIB_MR_PATH = "Assets/FVTC/LearningInnovations-MR";
 
         [MenuItem("Learning Innovations/Install Submodule/Mixed Reality")]
         static void InstallMixedRealitySubmodule()
         {
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
             {
-                DirectoryInfo dir = new DirectoryInfo(Path.Combine(Application.dataPath, UNITY_LIB_MR_PATH));
-
-                GitHelper.AddModule(dir, UNITY_LIB_MR_URL);
+                GitHelper.AddModule(UNITY_LIB_MR_PATH, UNITY_LIB_MR_URL);
             }
         }
 

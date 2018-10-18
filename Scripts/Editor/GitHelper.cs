@@ -44,9 +44,53 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        public static void AddModule(DirectoryInfo directory, Uri uri)
+        public static void AddModule(string path, Uri uri)
         {
-            ProcessHelper.StartAndWaitForExit(GetGitPath(), string.Format("submodule add {0} {1}", uri, directory));
+            float lastProgress = 0f;
+
+            Action<string> stdErrCallback = msg =>
+            {
+                float? gitProgress = GitHelper.ParseProgress(msg);
+
+                if (gitProgress.HasValue)
+                    lastProgress = gitProgress.Value;
+
+                EditorUtility.DisplayProgressBar("Adding Submodule", msg, lastProgress);
+            };
+
+            try
+            {
+                ProcessHelper.StartAndWaitForExit(GetGitPath(), string.Format("submodule add {0} {1}", uri, path), null, stdErrCallback);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+
+        }
+
+        private static float? ParseProgress(string msg)
+        {
+            const string CHECKING_OUT_PREFIX = "Checking out files: ";
+            const string RECEIVING_OBJECTS_PREFIX = "Receiving objects: ";
+            const string RESOLVING_DELTAS_PREFIX = "Resolving deltas: ";
+
+            string[] prefixes = new string[] { CHECKING_OUT_PREFIX, RECEIVING_OBJECTS_PREFIX, RESOLVING_DELTAS_PREFIX };
+
+            float clonePercent;
+
+            foreach (var prefix in prefixes)
+            {
+                if (msg.StartsWith(prefix))
+                {
+                    if (float.TryParse(msg.Substring(prefix.Length).Trim().Split(' ')[0].TrimEnd('%'), out clonePercent))
+                    {
+                        return clonePercent / 100f;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public static Module[] GetModules()
@@ -77,7 +121,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
                             modules.Add(module);
                         }
-                        else if (module != null) 
+                        else if (module != null)
                         {
                             lineParts = line.Split(new char[] { '=' }, 2).Select(p => p.Trim()).ToArray();
 

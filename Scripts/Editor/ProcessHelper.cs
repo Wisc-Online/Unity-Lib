@@ -14,13 +14,14 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return Start(path, null);
         }
 
-        public static Process Start(string path, string arguments) {
-            return Start(path, arguments, _debugLogMessage);
+        public static Process Start(string path, string arguments)
+        {
+            return Start(path, arguments, null);
         }
 
         public static Process Start(string path, string arguments, Action<string> stdOutCallback)
         {
-            return Start(path, arguments, stdOutCallback, _debugLogError);
+            return Start(path, arguments, stdOutCallback, null);
         }
 
         static Action<string> _debugLogError = str => UnityEngine.Debug.LogError(str);
@@ -39,39 +40,47 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 CreateNoWindow = true
             });
 
-            if (stdOutCallback != null)
-            {
-                string stdOut;
+            if (stdOutCallback == null)
+                stdOutCallback = _debugLogMessage;
 
-                while((stdOut = process.StandardOutput.ReadLine()) != null)
-                {
-                    stdOutCallback(stdOut);
-                }
+            if (stdErrCallback == null)
+                stdErrCallback = _debugLogError;
+
+                string msg;
+
+            while ((msg = process.StandardOutput.ReadLine()) != null)
+            {
+                stdOutCallback(msg);
             }
 
-            if (stdErrCallback != null)
+            while ((msg = process.StandardError.ReadLine()) != null)
             {
-                string stdOut;
-
-                while ((stdOut = process.StandardError.ReadLine()) != null)
-                {
-                    stdErrCallback(stdOut);
-                }
+                stdErrCallback(msg);
             }
 
             return process;
         }
+
+        const int EXIT_CODE_SUCCESS = 0;
 
         public static bool StartAndWaitForExit(string path)
         {
             return StartAndWaitForExit(path, null);
         }
 
-        const int EXIT_CODE_SUCCESS = 0;
-
         public static bool StartAndWaitForExit(string path, string arguments)
         {
-            using (var process = Start(path, arguments))
+            return StartAndWaitForExit(path, arguments, null);
+        }
+
+        public static bool StartAndWaitForExit(string path, string arguments, Action<string> standardOutputCallback)
+        {
+            return StartAndWaitForExit(path, arguments, null, null);
+        }
+
+        public static bool StartAndWaitForExit(string path, string arguments, Action<string> standardOutputCallback, Action<string> standardErrorCallback)
+        {
+            using (var process = Start(path, arguments, standardOutputCallback, standardErrorCallback))
             {
                 process.WaitForExit();
 
