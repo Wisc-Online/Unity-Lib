@@ -103,7 +103,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
                 if (commitAll)
                 {
-                    ExecuteCommand("-c core.autocrlf=false add .", "Git Staging", "Adding all changes to the staged files.");
+                    AddAll();
+                    
                 }
                 
                 string gitCommand = string.Format("commit -F {0} ", tempFilePath).Trim();
@@ -119,6 +120,32 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 {
                     File.Delete(tempFilePath);
                 }
+            }
+        }
+
+        private static bool AddAll()
+        {
+            try
+            {
+                int i = 0;
+
+                EditorUtility.DisplayProgressBar("Staging files", "Starting to stage files...", 0f);
+
+                Action<string> callback = msg =>
+                {
+                    i++;
+
+                    if (i > 100)
+                        i = 1;
+
+                    EditorUtility.DisplayProgressBar("Staging files", msg, i / 100f);
+                };
+
+                return ProcessHelper.StartAndWaitForExit(GetGitPath(), "-c core.autocrlf=false add .", null, callback);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
             }
         }
 
