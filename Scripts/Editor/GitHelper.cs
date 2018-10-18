@@ -93,6 +93,61 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return null;
         }
 
+        public static void Commit(string message, bool commitAll)
+        {
+            string tempFilePath = System.IO.Path.GetTempFileName();
+
+            try
+            {
+                File.WriteAllText(tempFilePath, message);
+
+                if (commitAll)
+                {
+                    ExecuteCommand("-c core.autocrlf=false add .", "Git Staging", "Adding all changes to the staged files.");
+                }
+                
+                string gitCommand = string.Format("commit -F {0} ", tempFilePath).Trim();
+
+                if (!ExecuteCommand(gitCommand, "Git Commit", "Committing changes."))
+                {
+                    EditorUtility.DisplayDialog("Error", "There was an error while performing the Commit.  See error log.", "OK");
+                }
+            }
+            finally
+            {
+                if (File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
+            }
+        }
+
+        public static void Push()
+        {
+            Push("origin", "master");
+        }
+
+        public static void Pull()
+        {
+            Pull("origin", "master");
+        }
+
+        private static void Pull(string remote, string branch)
+        {
+            if (!ExecuteCommand(string.Format("pull {0} {1}", remote, branch), "Git Pull", string.Format("Pulling from {0}/{1}", remote, branch)))
+            {
+                EditorUtility.DisplayDialog("Error", "There was an error while performing the Pull.  See error log.", "OK");
+            }
+        }
+
+        static void Push(string remote, string branch)
+        {
+            if (!ExecuteCommand(string.Format("push {0} {1}", remote, branch), "Git Push", string.Format("Pushing Changes to {0}/{1}", remote, branch)))
+            {
+                EditorUtility.DisplayDialog("Error", "There was an error while performing the Push.  See error log.", "OK");
+            }
+        }
+
         public static Module[] GetModules()
         {
             var gitModulesFile = new FileInfo(Path.Combine(Directory.GetParent(Application.dataPath).FullName, ".gitmodules"));
@@ -175,6 +230,20 @@ namespace FVTC.LearningInnovations.Unity.Editor
             public string Name { get; set; }
             public string Path { get; set; }
             public Uri Url { get; set; }
+        }
+
+        static bool ExecuteCommand(string command, string title, string message)
+        {
+            try
+            {
+                EditorUtility.DisplayProgressBar(title, message, 0f);
+
+                return ProcessHelper.StartAndWaitForExit(GetGitPath(), command);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
         }
     }
 }
