@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FVTC.LearningInnovations.Unity.Extensions
+﻿namespace FVTC.LearningInnovations.Unity.Extensions
 {
     public static class TypeExtensions
     {

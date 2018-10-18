@@ -21,7 +21,7 @@ namespace FVTC.LearningInnovations.Unity.Input
 
         public void Invoke()
         {
-            if (!string.IsNullOrWhiteSpace(buttonName))
+            if (!string.IsNullOrEmpty(buttonName))
             {
                 if (downEvent != null && UnityEngine.Input.GetButtonDown(buttonName))
                 {

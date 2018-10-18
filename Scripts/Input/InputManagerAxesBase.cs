@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace FVTC.LearningInnovations.Unity.Input
 {
@@ -111,7 +106,7 @@ namespace FVTC.LearningInnovations.Unity.Input
 
         protected float GetAxis(string axisName)
         {
-            if (string.IsNullOrWhiteSpace(axisName))
+            if (string.IsNullOrEmpty(axisName))
                 return 0;
 
             return UnityEngine.Input.GetAxis(axisName);

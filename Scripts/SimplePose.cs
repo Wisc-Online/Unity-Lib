@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace FVTC.LearningInnovations.Scripts.Unity
@@ -22,8 +18,6 @@ namespace FVTC.LearningInnovations.Scripts.Unity
         [SerializeField]
         public readonly Quaternion Rotation;
         
-
-        //  User-defined conversion from double to Digit
         public static implicit operator SimplePose(Pose p)
         {
             return new SimplePose(p.position, p.rotation);

@@ -21,7 +21,7 @@ namespace FVTC.LearningInnovations.Unity.Input
 
         public void Invoke()
         {
-            if (!string.IsNullOrWhiteSpace(axisName) && this.unityEvent != null)
+            if (!string.IsNullOrEmpty(axisName) && this.unityEvent != null)
             {
                 float reading = UnityEngine.Input.GetAxis(axisName);
 
