@@ -21,6 +21,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
             {
                 GitHelper.AddModule(UNITY_LIB_MR_PATH, UNITY_LIB_MR_URL);
+
+                AssetDatabase.Refresh();
             }
         }
 
