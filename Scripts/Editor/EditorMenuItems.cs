@@ -108,5 +108,29 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
 
+
+        [MenuItem("Learning Innovations/Git/Undo All Changes")]
+        static void GitUndo()
+        {
+            if (Dialog.YesNo("Undo All Changes?", "This process will undo any changes made since your last commit.\r\nAre you sure you want to continue?"))
+            {
+                // add all non-staged changes to stage
+                if (GitHelper.AddAll() && GitHelper.Stash() && GitHelper.StashDrop())
+                {
+                    // success!!
+                }
+                else
+                {
+                    Dialog.Close("Error", "There was a problem undoing your changes.\r\nSee console log for details.");
+                }
+            }
+        }
+
+
+        [MenuItem("Learning Innovations/Git/Undo All Changes", true)]
+        static bool ValidateGitUndo()
+        {
+            return GitHelper.IsProjectGitRepository;
+        }
     }
 }

@@ -112,5 +112,20 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
+        public static bool YesNo(string title, string message)
+        {
+            return EditorUtility.DisplayDialog(title, message, "Yes", "No");
+        }
+
+        public static bool OkCancel(string title, string message)
+        {
+            return EditorUtility.DisplayDialog(title, message, "OK", "Cancel");
+        }
+
+        public static void Close(string title, string message)
+        {
+            EditorUtility.DisplayDialog(title, message, "Close");
+        }
+
     }
 }

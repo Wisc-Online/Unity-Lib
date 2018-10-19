@@ -104,9 +104,9 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 if (commitAll)
                 {
                     AddAll();
-                    
+
                 }
-                
+
                 string gitCommand = string.Format("commit -F {0} ", tempFilePath).Trim();
 
                 if (!ExecuteCommand(gitCommand, "Git Commit", "Committing changes."))
@@ -123,7 +123,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        private static bool AddAll()
+        public static bool AddAll()
         {
             try
             {
@@ -148,6 +148,38 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 EditorUtility.ClearProgressBar();
             }
         }
+
+        public static bool Stash()
+        {
+            try
+            {
+                int i = 0;
+
+                EditorUtility.DisplayProgressBar("Stashing Staged Changes", "Starting stash...", 0f);
+
+                Action<string> callback = msg =>
+                {
+                    i++;
+
+                    if (i > 100)
+                        i = 1;
+
+                    EditorUtility.DisplayProgressBar("Stashing Staged Changes", msg, i / 100f);
+                };
+
+                return ProcessHelper.StartAndWaitForExit(GetGitPath(), "stash", null, callback);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+        public static bool StashDrop()
+        {
+            return ExecuteCommand("stash drop", "Dropping Last Stash", "Removing the last stash.");
+        }
+
 
         public static void Push()
         {
