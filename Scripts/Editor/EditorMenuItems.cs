@@ -15,7 +15,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
         static readonly Uri UNITY_LIB_MR_URL = new Uri("https://github.com/Wisc-Online/Unity-Lib-MR.git");
         const string UNITY_LIB_MR_PATH = "Assets/FVTC/LearningInnovations-MR";
 
-        [MenuItem("Learning Innovations/Install Submodule/Mixed Reality")]
+        [MenuItem("Learning Innovations/Mixed Reality/Install")]
         static void InstallMixedRealitySubmodule()
         {
             if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
@@ -26,7 +26,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        [MenuItem("Learning Innovations/Install Submodule/Mixed Reality", true)]
+        [MenuItem("Learning Innovations/Mixed Reality/Install", true)]
         static bool ValidateInstallMixedRealitySubmodule()
         {
             bool canRun = false;
@@ -60,19 +60,22 @@ namespace FVTC.LearningInnovations.Unity.Editor
         [MenuItem("Learning Innovations/Git/Commit All Changes")]
         static void GitCommitAll()
         {
-            Action<string> acceptCallback = msg =>
+            if (UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes())
             {
-                if (string.IsNullOrEmpty(msg))
+                Action<string> acceptCallback = msg =>
                 {
-                    GitCommitAll();
-                }
-                else
-                {
-                    GitHelper.Commit(msg, true);
-                }
-            };
+                    if (string.IsNullOrEmpty(msg))
+                    {
+                        GitCommitAll();
+                    }
+                    else
+                    {
+                        GitHelper.Commit(msg, true);
+                    }
+                };
 
-            Dialog.PromptMultiLine("Git Commit", "Enter a commit message.", acceptCallback);
+                Dialog.PromptMultiLine("Git Commit", "Enter a commit message.", acceptCallback);
+            }
         }
 
         [MenuItem("Learning Innovations/Git/Commit All Changes", true)]
@@ -114,14 +117,19 @@ namespace FVTC.LearningInnovations.Unity.Editor
         {
             if (Dialog.YesNo("Undo All Changes?", "This process will undo any changes made since your last commit.\r\nAre you sure you want to continue?"))
             {
-                // add all non-staged changes to stage
-                if (GitHelper.AddAll() && GitHelper.Stash() && GitHelper.StashDrop())
+                if (UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes())
                 {
-                    // success!!
-                }
-                else
-                {
-                    Dialog.Close("Error", "There was a problem undoing your changes.\r\nSee console log for details.");
+
+                    // add all non-staged changes to stage
+                    if (GitHelper.AddAll() && GitHelper.Stash() && GitHelper.StashDrop())
+                    {
+                        // success!!
+                        AssetDatabase.Refresh();
+                    }
+                    else
+                    {
+                        Dialog.Close("Error", "There was a problem undoing your changes.\r\nSee console log for details.");
+                    }
                 }
             }
         }
