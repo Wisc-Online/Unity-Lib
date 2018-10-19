@@ -75,7 +75,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
         public static bool StartAndWaitForExit(string path, string arguments, Action<string> standardOutputCallback)
         {
-            return StartAndWaitForExit(path, arguments, null, null);
+            return StartAndWaitForExit(path, arguments, standardOutputCallback, null);
         }
 
         public static bool StartAndWaitForExit(string path, string arguments, Action<string> standardOutputCallback, Action<string> standardErrorCallback)

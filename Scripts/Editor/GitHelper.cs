@@ -69,6 +69,55 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
         }
 
+        internal static Remote[] GetRemotes()
+        {
+            List<Remote> remotes = new List<Remote>();
+            Remote lastRemote = null;
+            Uri uri = null;
+            Action<string> remoteParser = str =>
+            {
+                string[] parts = str.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (parts.Length == 3)
+                {
+                    if (lastRemote == null || lastRemote.Name != parts[0])
+                    {
+                        lastRemote = new Remote
+                        {
+                            Name = parts[0]
+                        };
+
+                        remotes.Add(lastRemote);
+                    }
+
+                    switch (parts[2])
+                    {
+                        case "(fetch)":
+                            if (Uri.TryCreate(parts[1], UriKind.RelativeOrAbsolute, out uri))
+                            {
+                                lastRemote.FetchUri = uri;
+                            }
+                            break;
+                        case "(push)":
+                            if (Uri.TryCreate(parts[1], UriKind.RelativeOrAbsolute, out uri))
+                            {
+                                lastRemote.PushUri = uri;
+                            }
+                            break;
+                    }
+                }
+            };
+
+            bool success = ProcessHelper.StartAndWaitForExit(GetGitPath(), "remote -v", remoteParser);
+
+            return remotes.ToArray();
+        }
+
+        public static bool AddRemote(Remote remote)
+        {
+            return ExecuteCommand(string.Format("remote add {0} {1}", remote.Name, remote.FetchUri), "Adding Remote", string.Format("Adding Remote '{0}' with URL '{1}'", remote.Name, remote.FetchUri));
+        }
+
         private static float? ParseProgress(string msg)
         {
             const string CHECKING_OUT_PREFIX = "Checking out files: ";
@@ -289,6 +338,31 @@ namespace FVTC.LearningInnovations.Unity.Editor
             public string Name { get; set; }
             public string Path { get; set; }
             public Uri Url { get; set; }
+        }
+
+        public class Remote
+        {
+
+            public string Name { get; set; }
+            public Uri FetchUri { get; set; }
+            public Uri PushUri { get; set; }
+        }
+
+        public static bool UpdateSubmodule(string url)
+        {
+            var module = GetModules().Where(x => url.Equals(x.Url.AbsoluteUri, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+
+            if (module == null)
+            {
+                UnityEngine.Debug.LogErrorFormat("Module with Url {0} Not Found", url);
+                return false;
+            }
+            else
+            {
+                string command = string.Format("submodule update {0}", module.Path);
+
+                return ExecuteCommand(command, "Updating Submodule", "Updating Module: " + module.Name);
+            }
         }
 
         static bool ExecuteCommand(string command, string title, string message)

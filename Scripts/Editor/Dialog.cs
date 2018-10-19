@@ -117,6 +117,11 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return EditorUtility.DisplayDialog(title, message, "Yes", "No");
         }
 
+        public static void OK(string title, string message)
+        {
+            EditorUtility.DisplayDialog(title, message, "OK");
+        }
+
         public static bool OkCancel(string title, string message)
         {
             return EditorUtility.DisplayDialog(title, message, "OK", "Cancel");
@@ -125,6 +130,11 @@ namespace FVTC.LearningInnovations.Unity.Editor
         public static void Close(string title, string message)
         {
             EditorUtility.DisplayDialog(title, message, "Close");
+        }
+
+        public static void ErrorSeeOutput()
+        {
+            EditorUtility.DisplayDialog("Error", "See console for error details.", "OK");
         }
 
     }

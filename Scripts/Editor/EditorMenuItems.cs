@@ -57,6 +57,57 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return !GitHelper.IsProjectGitRepository;
         }
 
+        [MenuItem("Learning Innovations/Git/Set Origin")]
+        static void GitSetOrigin()
+        {
+            var remotes = GitHelper.GetRemotes();
+
+            if (GitHelper.GetRemotes().Any(x => x.Name == "origin"))
+            {
+                Dialog.Close("Git remote exists", "The Git repository already contains a remote named 'origin'.");
+            }
+            else
+            {
+
+                Action<string> callback = userInput =>
+                {
+                    Uri uri = null;
+
+                    if (!string.IsNullOrEmpty(userInput) && Uri.TryCreate(userInput, UriKind.Absolute, out uri))
+                    {
+                        bool success = GitHelper.AddRemote(new GitHelper.Remote
+                        {
+                            Name = "origin",
+                            FetchUri = uri,
+                            PushUri = uri
+                        });
+
+                        if (success)
+                        {
+                            Dialog.Close("Git Remote Added", "Git remote added successfully");
+                        }
+                        else
+                        {
+                            Dialog.ErrorSeeOutput();
+                        }
+                    }
+                    else
+                    {
+                        // try again, bozo!
+                        GitSetOrigin();
+                    }
+                };
+
+                Dialog.Prompt("Set Git Origin", "Specify the URL of your Git origin.", callback);
+            }
+        }
+
+        [MenuItem("Learning Innovations/Git/Set Origin", true)]
+        static bool ValidateGitSetOrigin()
+        {
+            return GitHelper.IsProjectGitRepository && !GitHelper.GetRemotes().Any(x => x.Name == "origin");
+        }
+
         [MenuItem("Learning Innovations/Git/Commit All Changes")]
         static void GitCommitAll()
         {
