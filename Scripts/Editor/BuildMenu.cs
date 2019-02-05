@@ -24,6 +24,31 @@ namespace FVTC.LearningInnovations.Unity.Editor
         {
             Build(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows);
         }
+        
+        [MenuItem("Learning Innovations/Build/Standalone/Mac")]
+        static void BuildStandaloneMac()
+        {
+            Build(BuildTargetGroup.Standalone, BuildTarget.StandaloneOSX);
+        }
+
+        [MenuItem("Learning Innovations/Build/Standalone/Linux")]
+        static void BuildStandaloneLinux()
+        {
+            Build(BuildTargetGroup.Standalone, BuildTarget.StandaloneLinux);
+        }
+
+        [MenuItem("Learning Innovations/Build/Android/Android")]
+        static void BuildAndroid()
+        {
+            Build(BuildTargetGroup.Android, BuildTarget.Android);
+        }
+
+
+        [MenuItem("Learning Innovations/Build/Android/Oculus Go")]
+        static void BuildAndroidOculusGo()
+        {
+            Build(BuildTargetGroup.Android, BuildTarget.Android);
+        }
 
         private static void Build(BuildTargetGroup buildTargetGroup, BuildTarget buildTarget)
         {
@@ -112,17 +137,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
         }
 
-        [MenuItem("Learning Innovations/Build/Standalone/Mac")]
-        void BuildStandaloneMac()
-        {
+       
 
-        }
-
-        [MenuItem("Learning Innovations/Build/Standalone/Linux")]
-        void BuildStandaloneLinux()
-        {
-
-        }
 
         static void DeleteDirectory(string target_dir)
         {
