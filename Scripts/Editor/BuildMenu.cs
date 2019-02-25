@@ -79,8 +79,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
 
-        [MenuItem("Learning Innovations/Build/Android/Oculus Go")]
-        static void BuildAndroidOculusGo()
+        [MenuItem("Learning Innovations/Build/Android/Oculus")]
+        static void BuildAndroidOculus()
         {
             Build(new BuildSettings
             {
@@ -89,6 +89,19 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 IsVirtualRealitySupported = true,
                 VirtualRealitySDKs = new string[] { "Oculus" },
                 NameSuffix = "Oculus"
+            });
+        }
+
+        [MenuItem("Learning Innovations/Build/Android/Google Cardboard and Oculus")]
+        static void BuildAndroidCardboardOculus()
+        {
+            Build(new BuildSettings
+            {
+                BuildTargetGroup = BuildTargetGroup.Android,
+                BuildTarget = BuildTarget.Android,
+                IsVirtualRealitySupported = true,
+                VirtualRealitySDKs = new string[] { "cardboard", "Oculus" },
+                NameSuffix = "Cardboard + Oculus"
             });
         }
 
