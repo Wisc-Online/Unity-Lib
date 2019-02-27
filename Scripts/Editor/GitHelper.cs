@@ -108,7 +108,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 }
             };
 
-            bool success = ProcessHelper.StartAndWaitForExit(GetGitPath(), "remote -v", remoteParser);
+            ProcessHelper.StartAndWaitForExit(GetGitPath(), "remote -v", remoteParser);
 
             return remotes.ToArray();
         }

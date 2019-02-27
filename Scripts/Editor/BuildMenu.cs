@@ -55,54 +55,97 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
         [MenuItem("Learning Innovations/Build/Android/Android (No VR)")]
-        static void BuildAndroid()
+        static void BuildAndroidNoVR()
         {
-            Build(new BuildSettings
-            {
-                BuildTargetGroup = BuildTargetGroup.Android,
-                BuildTarget = BuildTarget.Android
-            });
+            BuildAndroid();
         }
 
 
         [MenuItem("Learning Innovations/Build/Android/Google Cardboard")]
         static void BuildAndroidGoogleCardboard()
         {
-            Build(new BuildSettings
-            {
-                BuildTargetGroup = BuildTargetGroup.Android,
-                BuildTarget = BuildTarget.Android,
-                IsVirtualRealitySupported = true,
-                VirtualRealitySDKs = new string[] { "cardboard" },
-                NameSuffix = "Cardboard"
-            });
+            BuildAndroid("cardboard");
         }
 
 
         [MenuItem("Learning Innovations/Build/Android/Oculus")]
         static void BuildAndroidOculus()
         {
-            Build(new BuildSettings
-            {
-                BuildTargetGroup = BuildTargetGroup.Android,
-                BuildTarget = BuildTarget.Android,
-                IsVirtualRealitySupported = true,
-                VirtualRealitySDKs = new string[] { "Oculus" },
-                NameSuffix = "Oculus"
-            });
+            BuildAndroid("Oculus");
         }
 
         [MenuItem("Learning Innovations/Build/Android/Google Cardboard and Oculus")]
         static void BuildAndroidCardboardOculus()
         {
-            Build(new BuildSettings
+            BuildAndroid("cardboard", "Oculus");
+        }
+
+        static void BuildAndroid(params string[] vrSdks)
+        {
+            if (vrSdks == null)
+                vrSdks = new string[] { };
+
+            // swap AndroidManifest.xml
+            FileInfo androidManifest, targetManifest = null, tempManifest = null;
+
+            androidManifest = new FileInfo(System.IO.Path.Combine(Application.dataPath, "Plugins/Android/AndroidManifest.xml"));
+
+            DirectoryInfo manifestDIr = new DirectoryInfo(System.IO.Path.Combine(Application.dataPath, "Plugins/Android"));
+
+            HashSet<string> desiredTargets = new HashSet<string>(vrSdks.Select(x => x.ToLower()));
+            IEnumerable<string> manifestTargets;
+            foreach(var file in manifestDIr.GetFiles("AndroidManifest.*.xml"))
             {
-                BuildTargetGroup = BuildTargetGroup.Android,
-                BuildTarget = BuildTarget.Android,
-                IsVirtualRealitySupported = true,
-                VirtualRealitySDKs = new string[] { "cardboard", "Oculus" },
-                NameSuffix = "Cardboard + Oculus"
-            });
+                manifestTargets = file.Name.Substring("AndroidManifest.".Length).Replace(".xml", "").ToLower().Split('.');
+
+                if (desiredTargets.SetEquals(manifestTargets))
+                {
+                    targetManifest = file;
+                    break;
+                }
+            }
+
+            if (targetManifest != null)
+            {
+                if (androidManifest.Exists)
+                {
+                    // swap the files (swap back after build)
+                    tempManifest = new FileInfo(FileUtil.GetUniqueTempPathInProject());
+
+                    FileUtil.MoveFileOrDirectory(androidManifest.FullName, tempManifest.FullName);
+                }
+
+                FileUtil.MoveFileOrDirectory(targetManifest.FullName, androidManifest.FullName);
+
+                AssetDatabase.Refresh();
+            }
+
+            try
+            {
+                Build(new BuildSettings
+                {
+                    BuildTargetGroup = BuildTargetGroup.Android,
+                    BuildTarget = BuildTarget.Android,
+                    IsVirtualRealitySupported = vrSdks.Any(),
+                    VirtualRealitySDKs = vrSdks,
+                    NameSuffix = string.Join(" + ", vrSdks.Select(x => System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(x)).ToArray())
+                });
+            }
+            finally
+            {
+
+                if (targetManifest != null)
+                {
+                    FileUtil.MoveFileOrDirectory(androidManifest.FullName, targetManifest.FullName);
+
+                    if (tempManifest != null)
+                    {
+                        FileUtil.MoveFileOrDirectory(tempManifest.FullName, androidManifest.FullName);
+                    }
+
+                    AssetDatabase.Refresh();
+                }
+            }
         }
 
         private static BuildSettings GetCurrentBuildSettings()

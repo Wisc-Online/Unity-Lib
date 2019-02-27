@@ -60,8 +60,6 @@ namespace FVTC.LearningInnovations.Unity.Editor
         [MenuItem("Learning Innovations/Git/Set Origin")]
         static void GitSetOrigin()
         {
-            var remotes = GitHelper.GetRemotes();
-
             if (GitHelper.GetRemotes().Any(x => x.Name == "origin"))
             {
                 Dialog.Close("Git remote exists", "The Git repository already contains a remote named 'origin'.");
