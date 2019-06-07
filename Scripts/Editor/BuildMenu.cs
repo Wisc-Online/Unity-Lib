@@ -94,7 +94,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
             HashSet<string> desiredTargets = new HashSet<string>(vrSdks.Select(x => x.ToLower()));
             IEnumerable<string> manifestTargets;
-            foreach(var file in manifestDIr.GetFiles("AndroidManifest.*.xml"))
+            foreach (var file in manifestDIr.GetFiles("AndroidManifest.*.xml"))
             {
                 manifestTargets = file.Name.Substring("AndroidManifest.".Length).Replace(".xml", "").ToLower().Split('.');
 
@@ -206,10 +206,25 @@ namespace FVTC.LearningInnovations.Unity.Editor
             if (!buildOutputDirectory.Exists)
                 buildOutputDirectory.Create();
 
-            FileInfo buildOutputExe = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("{0}{2}.{1}", 
-                PlayerSettings.productName, 
-                buildSettings.GetBuildFileExtension(),
-                string.IsNullOrEmpty(buildSettings.NameSuffix) ? "" : " (" + buildSettings.NameSuffix + ")"
+            if (!string.IsNullOrEmpty(buildSettings.NameSuffix))
+            {
+                buildOutputDirectory = new DirectoryInfo(Path.Combine(buildOutputDirectory.FullName, buildSettings.NameSuffix));
+
+                if (!buildOutputDirectory.Exists)
+                    buildOutputDirectory.Create();
+            }
+
+            if (buildSettings.BuildTargetGroup == BuildTargetGroup.Android)
+            {
+                buildOutputDirectory = new DirectoryInfo(Path.Combine(buildOutputDirectory.FullName, "v" + PlayerSettings.Android.bundleVersionCode));
+
+                if (!buildOutputDirectory.Exists)
+                    buildOutputDirectory.Create();
+            }
+
+            FileInfo buildOutputExe = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("{0}.{1}",
+                buildSettings.BuildTargetGroup == BuildTargetGroup.Android ? PlayerSettings.applicationIdentifier + ".v" + PlayerSettings.Android.bundleVersionCode : PlayerSettings.productName,
+                buildSettings.GetBuildFileExtension()
                 )));
 
             BuildReport buildReport = null;
@@ -224,6 +239,21 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
             finally
             {
+                if (buildSettings.BuildTargetGroup == BuildTargetGroup.Android && PlayerSettings.Android.useAPKExpansionFiles)
+                {
+                    var obbFile = new FileInfo(Path.ChangeExtension(buildOutputExe.FullName, ".main.obb"));
+
+                    if (obbFile.Exists)
+                    {
+                        var correctObbFile = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("main.{0}.{1}.obb", PlayerSettings.Android.bundleVersionCode, PlayerSettings.applicationIdentifier)));
+
+                        if (correctObbFile.Exists)
+                            correctObbFile.Delete();
+
+                        obbFile.MoveTo(correctObbFile.FullName);
+                    }
+                }
+
                 if (oldBuildSettings.BuildTarget != buildSettings.BuildTarget || oldBuildSettings.BuildTargetGroup != buildSettings.BuildTargetGroup)
                 {
                     EditorUtility.DisplayProgressBar("Build", "Switching current build target back to " + buildSettings.BuildTargetGroup.ToString() + " - " + buildSettings.BuildTarget.ToString(), 0f);
