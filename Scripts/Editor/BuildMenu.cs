@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
     public class BuildMenu
     {
         const string BUILDS_DIRECTORY = "builds";
+
 
         [MenuItem("Learning Innovations/Build/Standalone/Windows (64-bit)")]
         static void BuildStandaloneWindows64()
@@ -54,33 +56,39 @@ namespace FVTC.LearningInnovations.Unity.Editor
             });
         }
 
-        [MenuItem("Learning Innovations/Build/Android/Android (No VR)")]
-        static void BuildAndroidNoVR()
+        [MenuItem("Learning Innovations/Build/Android/No VR")]
+        static void BuildAndroid()
         {
-            BuildAndroid();
+            BuildAndroid(new string[] { });
         }
 
-
-        [MenuItem("Learning Innovations/Build/Android/Google Cardboard")]
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard")]
         static void BuildAndroidGoogleCardboard()
         {
             BuildAndroid("cardboard");
         }
 
-
-        [MenuItem("Learning Innovations/Build/Android/Oculus")]
-        static void BuildAndroidOculus()
-        {
-            BuildAndroid("Oculus");
-        }
-
-        [MenuItem("Learning Innovations/Build/Android/Google Cardboard and Oculus")]
-        static void BuildAndroidCardboardOculus()
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard and Oculus")]
+        static void BuildAndroidGoogleCardboardOculus()
         {
             BuildAndroid("cardboard", "Oculus");
         }
 
-        static void BuildAndroid(params string[] vrSdks)
+        [MenuItem("Learning Innovations/Build/Android/VR/Oculus")]
+        static void BuildAndroidOculus()
+        {
+            BuildAndroid("Oculus");
+
+
+        }
+
+
+        static BuildReport BuildAndroid(params string[] vrSdks)
+        {
+            return BuildAndroid(OnAndroidBuildCompleted, vrSdks);
+        }
+
+        static BuildReport BuildAndroid(Action<BuildReport> buildCompletionAction, params string[] vrSdks)
         {
             if (vrSdks == null)
                 vrSdks = new string[] { };
@@ -120,20 +128,22 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 AssetDatabase.Refresh();
             }
 
+            BuildReport buildReport;
+
             try
             {
-                Build(new BuildSettings
+                buildReport = Build(new BuildSettings
                 {
                     BuildTargetGroup = BuildTargetGroup.Android,
                     BuildTarget = BuildTarget.Android,
                     IsVirtualRealitySupported = vrSdks.Any(),
                     VirtualRealitySDKs = vrSdks,
-                    NameSuffix = string.Join(" + ", vrSdks.Select(x => System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(x)).ToArray())
+                    NameSuffix = string.Join(" + ", vrSdks.Select(x => System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(x)).ToArray()),
+                    PostBuildAction = buildCompletionAction
                 });
             }
             finally
             {
-
                 if (targetManifest != null)
                 {
                     FileUtil.MoveFileOrDirectory(androidManifest.FullName, targetManifest.FullName);
@@ -144,6 +154,48 @@ namespace FVTC.LearningInnovations.Unity.Editor
                     }
 
                     AssetDatabase.Refresh();
+                }
+            }
+
+            return buildReport;
+        }
+
+        private static void OnAndroidBuildCompleted(BuildReport report)
+        {
+            if (report.summary.result == BuildResult.Succeeded)
+            {
+                DirectoryInfo outputDir = new DirectoryInfo(System.IO.Path.GetDirectoryName(report.summary.outputPath));
+                FileInfo apkFile = new FileInfo(report.summary.outputPath),
+                        obbFile = new FileInfo(System.IO.Path.ChangeExtension(apkFile.FullName, "main.obb"));
+
+                using (var scriptFileStream = new System.IO.FileStream(Path.Combine(outputDir.FullName, "adb-install.cmd"), FileMode.Create, FileAccess.Write))
+                using (var scriptWriter = new System.IO.StreamWriter(scriptFileStream))
+                {
+                    string packageName = PlayerSettings.applicationIdentifier;
+
+                    scriptWriter.WriteLine("@echo off");
+                    scriptWriter.WriteLine("echo Uninstalling previous APK");
+                    scriptWriter.WriteLine(string.Format("adb uninstall {0}", packageName));
+
+                    scriptWriter.WriteLine("echo Removing previous OBB expansion file");
+                    scriptWriter.WriteLine(string.Format("adb shell rm -r /sdcard/Android/obb/{0}", packageName));
+
+                    scriptWriter.WriteLine("echo Installing new APK");
+                    scriptWriter.WriteLine(string.Format("adb install {0}", apkFile.Name));
+
+
+                    if (obbFile.Exists)
+                    {
+                        scriptWriter.WriteLine("echo Uploading new OBB expansion file");
+
+                        //scriptWriter.WriteLine("FOR /F \"tokens = *USEBACKQ\" %%F IN (`adb shell echo $EXTERNAL_STORAGE`) DO (");
+                        //scriptWriter.WriteLine("SET SDCARD=%%F");
+                        //scriptWriter.WriteLine(")");
+
+                        scriptWriter.WriteLine(string.Format("adb push -p {0} /sdcard/Android/obb/{2}/main.{1}.{2}.obb", obbFile.Name, PlayerSettings.Android.bundleVersionCode, packageName));
+                    }
+
+                    scriptWriter.WriteLine("pause");
                 }
             }
         }
@@ -159,7 +211,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             };
         }
 
-        private static void Build(BuildSettings buildSettings)
+        private static BuildReport Build(BuildSettings buildSettings)
         {
             var oldBuildSettings = GetCurrentBuildSettings();
 
@@ -172,7 +224,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             if (oldBuildSettings.BuildTarget != buildSettings.BuildTarget || oldBuildSettings.BuildTargetGroup != buildSettings.BuildTargetGroup)
             {
                 EditorUtility.DisplayProgressBar("Build", "Switching current build target to " + buildSettings.BuildTargetGroup.ToString() + " - " + buildSettings.BuildTarget.ToString(), 0f);
-                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, buildSettings.BuildTarget);
+                EditorUserBuildSettings.SwitchActiveBuildTarget(buildSettings.BuildTargetGroup, buildSettings.BuildTarget);
 
                 // SwitchActiveBuildTarget clears the progress bar, so show it again
                 EditorUtility.DisplayProgressBar("Build", "Starting the build process.", 0f);
@@ -222,10 +274,22 @@ namespace FVTC.LearningInnovations.Unity.Editor
                     buildOutputDirectory.Create();
             }
 
-            FileInfo buildOutputExe = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("{0}.{1}",
-                buildSettings.BuildTargetGroup == BuildTargetGroup.Android ? PlayerSettings.applicationIdentifier + ".v" + PlayerSettings.Android.bundleVersionCode : PlayerSettings.productName,
-                buildSettings.GetBuildFileExtension()
-                )));
+            FileInfo buildOutputExe;
+
+            if (buildSettings.BuildTargetGroup == BuildTargetGroup.Android)
+            {
+                buildOutputExe = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("{0}.{1}",
+                    PlayerSettings.applicationIdentifier + ".v" + PlayerSettings.Android.bundleVersionCode,
+                    EditorUserBuildSettings.exportAsGoogleAndroidProject ? "aab" : buildSettings.GetBuildFileExtension()
+                    )));
+            }
+            else
+            {
+                buildOutputExe = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("{0}.{1}",
+                    PlayerSettings.productName,
+                    buildSettings.GetBuildFileExtension()
+                    )));
+            }
 
             BuildReport buildReport = null;
 
@@ -236,24 +300,14 @@ namespace FVTC.LearningInnovations.Unity.Editor
                         buildOutputExe.FullName,
                         buildSettings.BuildTarget,
                         buildOptions);
+
+                if (buildSettings.PostBuildAction != null)
+                {
+                    buildSettings.PostBuildAction(buildReport);
+                }
             }
             finally
             {
-                if (buildSettings.BuildTargetGroup == BuildTargetGroup.Android && PlayerSettings.Android.useAPKExpansionFiles)
-                {
-                    var obbFile = new FileInfo(Path.ChangeExtension(buildOutputExe.FullName, ".main.obb"));
-
-                    if (obbFile.Exists)
-                    {
-                        var correctObbFile = new FileInfo(Path.Combine(buildOutputDirectory.FullName, string.Format("main.{0}.{1}.obb", PlayerSettings.Android.bundleVersionCode, PlayerSettings.applicationIdentifier)));
-
-                        if (correctObbFile.Exists)
-                            correctObbFile.Delete();
-
-                        obbFile.MoveTo(correctObbFile.FullName);
-                    }
-                }
-
                 if (oldBuildSettings.BuildTarget != buildSettings.BuildTarget || oldBuildSettings.BuildTargetGroup != buildSettings.BuildTargetGroup)
                 {
                     EditorUtility.DisplayProgressBar("Build", "Switching current build target back to " + buildSettings.BuildTargetGroup.ToString() + " - " + buildSettings.BuildTarget.ToString(), 0f);
@@ -268,10 +322,13 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 switch (buildReport.summary.result)
                 {
                     case BuildResult.Succeeded:
+
                         if (EditorUtility.DisplayDialog("Build Succeeded", "Do you want to open the build folder?", "Yes", "No"))
                         {
+                            FileInfo outputFile = new FileInfo(buildReport.summary.outputPath);
+
                             //System.Diagnostics.Process.Start("explorer.exe", buildOutputDirectory.FullName);
-                            Process.Start("explorer.exe", string.Format("/select, \"{0}\"", buildOutputExe.FullName));
+                            Process.Start("explorer.exe", string.Format("/select, \"{0}\"", outputFile.Exists ? outputFile.FullName : outputFile.Directory.FullName));
                         }
                         break;
                     case BuildResult.Failed:
@@ -282,6 +339,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
                         break;
                 }
             }
+
+            return buildReport;
         }
 
 
@@ -292,6 +351,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             public bool IsVirtualRealitySupported { get; set; }
             public string[] VirtualRealitySDKs { get; set; }
             public string NameSuffix { get; internal set; }
+            public Action<BuildReport> PostBuildAction { get; internal set; }
 
             public string GetBuildFileExtension()
             {
