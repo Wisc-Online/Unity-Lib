@@ -83,6 +83,17 @@ namespace FVTC.LearningInnovations.Unity.Editor
         }
 
 
+        [MenuItem("Learning Innovations/Build/Web GL")]
+        static void BuildWebGL()
+        {
+            Build(new BuildSettings
+            {
+                BuildTargetGroup = BuildTargetGroup.WebGL,
+                BuildTarget = BuildTarget.WebGL
+            });
+        }
+
+
         static BuildReport BuildAndroid(params string[] vrSdks)
         {
             return BuildAndroid(OnAndroidBuildCompleted, vrSdks);
