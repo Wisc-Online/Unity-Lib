@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !UNITY_2019
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -58,3 +60,4 @@ namespace FVTC.LearningInnovations.Unity.Networking
 
     }
 }
+#endif

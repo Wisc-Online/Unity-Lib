@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿#if !UNITY_2019
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FVTC.LearningInnovations.Unity.Extensions;
@@ -29,3 +30,4 @@ namespace FVTC.LearningInnovations.Unity.Networking.UNet
         }
     }
 }
+#endif
