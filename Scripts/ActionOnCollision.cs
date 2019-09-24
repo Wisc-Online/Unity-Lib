@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace FVTC.LearningInnovations.Unity
 {
-    
+
     public class ActionOnCollision : OnCollissionBase
     {
         [SerializeField]
