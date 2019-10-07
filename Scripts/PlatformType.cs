@@ -69,10 +69,11 @@ namespace FVTC.LearningInnovations.Unity
         {
             if (XRDevice.isPresent)
             {
+#if UNITY_WSA
                 return UnityEngine.XR.WSA.HolographicSettings.IsDisplayOpaque
                      ? PlatformType.VirtualReality
                      : PlatformType.AugmentedReality;
-
+#endif
             }
 
             return null;

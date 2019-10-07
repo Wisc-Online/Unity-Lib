@@ -370,6 +370,8 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 {
                     case BuildTargetGroup.Android:
                         return "apk";
+                    case BuildTargetGroup.WebGL:
+                        return "";
                 }
 
                 // if all else fails, assume .exe
