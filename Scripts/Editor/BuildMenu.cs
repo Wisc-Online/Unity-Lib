@@ -336,8 +336,10 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
                         if (EditorUtility.DisplayDialog("Build Succeeded", "Do you want to open the build folder?", "Yes", "No"))
                         {
+                            FileInfo outputFile = new FileInfo(buildReport.summary.outputPath);
+
                             //System.Diagnostics.Process.Start("explorer.exe", buildOutputDirectory.FullName);
-                            Process.Start("explorer.exe", string.Format("/select, \"{0}\"", buildReport.summary.outputPath));
+                            Process.Start("explorer.exe", string.Format("/select, \"{0}\"", outputFile.Exists ? outputFile.FullName : outputFile.Directory.FullName));
                         }
                         break;
                     case BuildResult.Failed:
