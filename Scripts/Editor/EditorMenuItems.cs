@@ -12,7 +12,13 @@ namespace FVTC.LearningInnovations.Unity.Editor
     {
 
         static readonly Uri UNITY_LIB_MR_URL = new Uri("https://github.com/Wisc-Online/Unity-Lib-MR.git");
+
+        static readonly Uri UNITY_LIB_OVR_HELPERS_URL = new Uri("https://github.com/Wisc-Online/Unity-OvrHelpers.git");
+
         const string UNITY_LIB_MR_PATH = "Assets/FVTC/LearningInnovations-MR";
+        const string UNITY_LIB_OVR_HELPERS_PATH = "Assets/FVTC/LearningInnovations-OvrHelpers";
+
+
 
         [MenuItem("Learning Innovations/Mixed Reality/Install")]
         static void InstallMixedRealitySubmodule()
@@ -40,6 +46,31 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return canRun;
         }
 
+        [MenuItem("Learning Innovations/Ovr/Install", priority = 0)]
+        static void InstallOvrHelpersSubmodule()
+        {
+            if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
+            {
+                GitHelper.AddModule(UNITY_LIB_OVR_HELPERS_PATH, UNITY_LIB_OVR_HELPERS_URL);
+
+                AssetDatabase.Refresh();
+            }
+        }
+
+        [MenuItem("Learning Innovations/Ovr/Install", true)]
+        static bool ValidateInstallOvrHelpersSubmodule()
+        {
+            bool canRun = false;
+
+            if (GitHelper.IsProjectGitRepository)
+            {
+                var modules = GitHelper.GetModules();
+
+                canRun = !modules.Any(m => m.Url == UNITY_LIB_OVR_HELPERS_URL);
+            }
+
+            return canRun;
+        }
 
         [MenuItem("Learning Innovations/Git/Initialize New Repository")]
         static void InitializeGitRepository()
