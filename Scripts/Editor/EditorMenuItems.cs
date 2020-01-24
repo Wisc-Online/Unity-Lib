@@ -46,32 +46,6 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return canRun;
         }
 
-        [MenuItem("Learning Innovations/Ovr/Install", priority = 0)]
-        static void InstallOvrHelpersSubmodule()
-        {
-            if (GitHelper.PromptUserToDownloadGitIfNotInstalled())
-            {
-                GitHelper.AddModule(UNITY_LIB_OVR_HELPERS_PATH, UNITY_LIB_OVR_HELPERS_URL);
-
-                AssetDatabase.Refresh();
-            }
-        }
-
-        [MenuItem("Learning Innovations/Ovr/Install", true)]
-        static bool ValidateInstallOvrHelpersSubmodule()
-        {
-            bool canRun = false;
-
-            if (GitHelper.IsProjectGitRepository)
-            {
-                var modules = GitHelper.GetModules();
-
-                canRun = !modules.Any(m => m.Url == UNITY_LIB_OVR_HELPERS_URL);
-            }
-
-            return canRun;
-        }
-
         [MenuItem("Learning Innovations/Git/Initialize New Repository")]
         static void InitializeGitRepository()
         {
