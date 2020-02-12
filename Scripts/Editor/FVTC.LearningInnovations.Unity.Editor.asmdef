@@ -1,0 +1,16 @@
+{
+    "name": "FVTC.LearningInnovations.Unity.Editor",
+    "references": [
+        "GUID:ad4413cc75e9ec5408e08629d03aeeb0"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
+}
