@@ -32,6 +32,7 @@ namespace FVTC.LearningInnovations.Unity.Editor.GitHub
 
         public static GitHubRelease Download(string url, Action<float> downloadProgressCallback)
         {
+#if !UNITY_2018_1_OR_NEWER
             WWW www = new WWW(url);
 
             while (!www.isDone)
@@ -51,6 +52,28 @@ namespace FVTC.LearningInnovations.Unity.Editor.GitHub
                 Debug.LogError(www.error);
                 return null;
             }
+#else
+            using (UnityEngine.Networking.UnityWebRequest request = UnityEngine.Networking.UnityWebRequest.Get(url))
+            {
+                request.SendWebRequest();
+
+                while (!request.isDone)
+                {
+                    UnityEditor.EditorUtility.DisplayProgressBar("Creating .gitignore file.", "Downloading .gitignore file from " + url, request.downloadProgress);
+                    System.Threading.Thread.Sleep(100);
+                }
+
+                if (request.isNetworkError)
+                {
+                    Debug.LogError(request.error);
+                    return null;
+                }
+                else
+                {
+                    return JsonUtility.FromJson<GitHubRelease>(request.downloadHandler.text);
+                }
+            }
+#endif
         }
     }
 }
