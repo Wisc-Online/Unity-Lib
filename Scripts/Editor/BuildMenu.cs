@@ -52,7 +52,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             Build(new BuildSettings
             {
                 BuildTargetGroup = BuildTargetGroup.Standalone,
-                BuildTarget = BuildTarget.StandaloneLinux
+                BuildTarget = BuildTarget.StandaloneLinux64
             });
         }
 
