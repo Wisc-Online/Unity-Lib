@@ -25,5 +25,15 @@ namespace FVTC.LearningInnovations.Unity.Extensions
 #endif
                 UnityEngine.Object.DontDestroyOnLoad(target);
         }
+
+        public static bool IsPrefab(this GameObject gameObject)
+        {
+            return gameObject.scene.name == null;
+        }
+
+        public static bool IsPrefab(this Component component)
+        {
+            return IsPrefab(component.gameObject);
+        }
     }
 }

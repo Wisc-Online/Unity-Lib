@@ -53,7 +53,9 @@ namespace FVTC.LearningInnovations.Unity
                 //case RuntimePlatform.WiiU:
                 //case RuntimePlatform.XBOX360:
                 case RuntimePlatform.PS4:
+#if !UNITY_2018_3_OR_NEWER
                 case RuntimePlatform.PSP2:
+#endif
                 case RuntimePlatform.Switch:
                 case RuntimePlatform.XboxOne:
                     return PlatformType.Console;
