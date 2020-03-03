@@ -109,34 +109,36 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
             androidManifest = new FileInfo(System.IO.Path.Combine(Application.dataPath, "Plugins/Android/AndroidManifest.xml"));
 
-            DirectoryInfo manifestDIr = new DirectoryInfo(System.IO.Path.Combine(Application.dataPath, "Plugins/Android"));
-
-            HashSet<string> desiredTargets = new HashSet<string>(vrSdks.Select(x => x.ToLower()));
-            IEnumerable<string> manifestTargets;
-            foreach (var file in manifestDIr.GetFiles("AndroidManifest.*.xml"))
+            DirectoryInfo manifestDir = new DirectoryInfo(System.IO.Path.Combine(Application.dataPath, "Plugins/Android"));
+            if (manifestDir.Exists)
             {
-                manifestTargets = file.Name.Substring("AndroidManifest.".Length).Replace(".xml", "").ToLower().Split('.');
-
-                if (desiredTargets.SetEquals(manifestTargets))
+                HashSet<string> desiredTargets = new HashSet<string>(vrSdks.Select(x => x.ToLower()));
+                IEnumerable<string> manifestTargets;
+                foreach (var file in manifestDir.GetFiles("AndroidManifest.*.xml"))
                 {
-                    targetManifest = file;
-                    break;
-                }
-            }
+                    manifestTargets = file.Name.Substring("AndroidManifest.".Length).Replace(".xml", "").ToLower().Split('.');
 
-            if (targetManifest != null)
-            {
-                if (androidManifest.Exists)
-                {
-                    // swap the files (swap back after build)
-                    tempManifest = new FileInfo(FileUtil.GetUniqueTempPathInProject());
-
-                    FileUtil.MoveFileOrDirectory(androidManifest.FullName, tempManifest.FullName);
+                    if (desiredTargets.SetEquals(manifestTargets))
+                    {
+                        targetManifest = file;
+                        break;
+                    }
                 }
 
-                FileUtil.MoveFileOrDirectory(targetManifest.FullName, androidManifest.FullName);
+                if (targetManifest != null)
+                {
+                    if (androidManifest.Exists)
+                    {
+                        // swap the files (swap back after build)
+                        tempManifest = new FileInfo(FileUtil.GetUniqueTempPathInProject());
 
-                AssetDatabase.Refresh();
+                        FileUtil.MoveFileOrDirectory(androidManifest.FullName, tempManifest.FullName);
+                    }
+
+                    FileUtil.MoveFileOrDirectory(targetManifest.FullName, androidManifest.FullName);
+
+                    AssetDatabase.Refresh();
+                }
             }
 
             BuildReport buildReport;
