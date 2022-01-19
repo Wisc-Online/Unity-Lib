@@ -63,7 +63,7 @@ namespace FVTC.LearningInnovations.Unity.Editor.GitHub
                     System.Threading.Thread.Sleep(100);
                 }
 
-#if UNITY_2019_1_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
                 if (request.result == UnityEngine.Networking.UnityWebRequest.Result.ConnectionError)
 #else
                 if (request.isNetworkError)
