@@ -33,14 +33,14 @@ namespace FVTC.LearningInnovations.Unity
                 case RuntimePlatform.LinuxPlayer:
                 case RuntimePlatform.OSXPlayer:
                 case RuntimePlatform.WindowsPlayer:
-                    return GetArVrPlatform() ?? PlatformType.Desktop;
+                    return PlatformType.Desktop;
 
                 //case RuntimePlatform.BlackBerryPlayer:
                 //case RuntimePlatform.TizenPlayer:
                 //case RuntimePlatform.WP8Player:
                 case RuntimePlatform.Android:
                 case RuntimePlatform.IPhonePlayer:
-                    return GetArVrPlatform() ?? PlatformType.Mobile;
+                    return PlatformType.Mobile;
 
 
                 //case RuntimePlatform.FlashPlayer:
@@ -65,20 +65,6 @@ namespace FVTC.LearningInnovations.Unity
                 default:
                     return PlatformType.Unknown;
             }
-        }
-
-        private static PlatformType? GetArVrPlatform()
-        {
-            if (XRDevice.isPresent)
-            {
-#if UNITY_WSA
-                return UnityEngine.XR.WSA.HolographicSettings.IsDisplayOpaque
-                     ? PlatformType.VirtualReality
-                     : PlatformType.AugmentedReality;
-#endif
-            }
-
-            return null;
         }
     }
 }

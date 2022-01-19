@@ -219,8 +219,10 @@ namespace FVTC.LearningInnovations.Unity.Editor
             {
                 BuildTarget = EditorUserBuildSettings.activeBuildTarget,
                 BuildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup,
+#if !UNITY_2019_1_OR_NEWER
                 IsVirtualRealitySupported = PlayerSettings.virtualRealitySupported,
                 VirtualRealitySDKs = PlayerSettings.GetVirtualRealitySDKs(EditorUserBuildSettings.selectedBuildTargetGroup),
+#endif
             };
         }
 
@@ -243,8 +245,10 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 EditorUtility.DisplayProgressBar("Build", "Starting the build process.", 0f);
             }
 
+#if !UNITY_2019_1_OR_NEWER
             PlayerSettings.virtualRealitySupported = buildSettings.IsVirtualRealitySupported;
             PlayerSettings.SetVirtualRealitySDKs(buildSettings.BuildTargetGroup, buildSettings.VirtualRealitySDKs);
+#endif
 
             if (EditorUserBuildSettings.development)
                 buildOptions |= BuildOptions.Development;
@@ -329,8 +333,10 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
                 EditorUtility.ClearProgressBar();
 
+#if !UNITY_2019_1_OR_NEWER
                 PlayerSettings.virtualRealitySupported = oldBuildSettings.IsVirtualRealitySupported;
                 PlayerSettings.SetVirtualRealitySDKs(oldBuildSettings.BuildTargetGroup, oldBuildSettings.VirtualRealitySDKs);
+#endif
 
                 switch (buildReport.summary.result)
                 {
