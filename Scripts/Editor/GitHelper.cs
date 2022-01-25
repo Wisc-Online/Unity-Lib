@@ -362,7 +362,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             }
             else
             {
-                string command = string.Format("submodule update {0}", module.Path);
+                string command = string.Format("submodule update --remote {0}", module.Path);
 
                 return ExecuteCommand(command, "Updating Submodule", "Updating Module: " + module.Name);
             }
