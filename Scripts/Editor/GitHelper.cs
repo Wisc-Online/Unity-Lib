@@ -112,6 +112,11 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return remotes.ToArray();
         }
 
+        public static bool SetRemote(Remote remote)
+        {
+            return ExecuteCommand(string.Format("remote set-url {0} {1}", remote.Name, remote.FetchUri), "Setting Remote", string.Format("Adding Set '{0}' with URL '{1}'", remote.Name, remote.FetchUri));
+        }
+
         public static bool AddRemote(Remote remote)
         {
             return ExecuteCommand(string.Format("remote add {0} {1}", remote.Name, remote.FetchUri), "Adding Remote", string.Format("Adding Remote '{0}' with URL '{1}'", remote.Name, remote.FetchUri));
@@ -341,7 +346,6 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
         public class Remote
         {
-
             public string Name { get; set; }
             public Uri FetchUri { get; set; }
             public Uri PushUri { get; set; }

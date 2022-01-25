@@ -58,6 +58,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
             window = ScriptableObject.CreateInstance<PromptWindow>();
             window.MultiLine = multiLine;
             window.Message = message;
+            window.Value = defaultValue;
             window.titleContent = new GUIContent(title);
             window.OkCallback = ok;
             window.CancelCallback = cancel;

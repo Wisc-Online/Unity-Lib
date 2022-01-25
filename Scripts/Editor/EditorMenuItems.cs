@@ -64,44 +64,64 @@ namespace FVTC.LearningInnovations.Unity.Editor
         [MenuItem("Learning Innovations/Git/Set Origin")]
         static void GitSetOrigin()
         {
-            if (GitHelper.GetRemotes().Any(x => x.Name == "origin"))
-            {
-                Dialog.Close("Git remote exists", "The Git repository already contains a remote named 'origin'.");
-            }
-            else
-            {
+            Action<string> callback;
 
-                Action<string> callback = userInput =>
+
+            callback = userInput =>
+            {
+                Uri uri = null;
+
+
+                if (!string.IsNullOrEmpty(userInput) && Uri.TryCreate(userInput, UriKind.Absolute, out uri))
                 {
-                    Uri uri = null;
+                    bool success;
 
-                    if (!string.IsNullOrEmpty(userInput) && Uri.TryCreate(userInput, UriKind.Absolute, out uri))
+                    if (GitHelper.GetRemotes().Any(x => x.Name == "origin"))
                     {
-                        bool success = GitHelper.AddRemote(new GitHelper.Remote
+                        success = GitHelper.SetRemote(new GitHelper.Remote
                         {
                             Name = "origin",
                             FetchUri = uri,
                             PushUri = uri
                         });
-
-                        if (success)
-                        {
-                            Dialog.Close("Git Remote Added", "Git remote added successfully");
-                        }
-                        else
-                        {
-                            Dialog.ErrorSeeOutput();
-                        }
                     }
                     else
+                    {
+                        success = GitHelper.AddRemote(new GitHelper.Remote
+                        {
+                            Name = "origin",
+                            FetchUri = uri,
+                            PushUri = uri
+                        });
+                    }
+
+                    if (success)
+                    {
+                        Dialog.Close("Git Remote Set", "Git remote set successfully. Have a nice day.");
+                    }
+                    else
+                    {
+                        Dialog.ErrorSeeOutput();
+                    }
+                }
+                else
+                {
+
+                    if (Dialog.OkCancel("Not valid URL", "The value entered is not a valid URL.  Try again?"))
                     {
                         // try again, bozo!
                         GitSetOrigin();
                     }
-                };
+                }
+            };
 
-                Dialog.Prompt("Set Git Origin", "Specify the URL of your Git origin.", callback);
-            }
+            string originUrl;
+
+            var origin = GitHelper.GetRemotes().Where(x => x.Name == "origin").FirstOrDefault();
+
+            originUrl = (origin == null) ? null : origin.FetchUri.AbsoluteUri;
+
+            Dialog.Prompt("Set Git Origin", "Specify the URL of your Git origin.", originUrl, callback);
         }
 
         [MenuItem("Learning Innovations/Git/Set Origin", true)]
