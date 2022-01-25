@@ -107,7 +107,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
         [MenuItem("Learning Innovations/Git/Set Origin", true)]
         static bool ValidateGitSetOrigin()
         {
-            return GitHelper.IsProjectGitRepository && !GitHelper.GetRemotes().Any(x => x.Name == "origin");
+            return GitHelper.IsProjectGitRepository;
         }
 
         [MenuItem("Learning Innovations/Git/Commit All Changes")]
