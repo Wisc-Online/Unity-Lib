@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -56,30 +55,76 @@ namespace FVTC.LearningInnovations.Unity.Editor
             });
         }
 
-        [MenuItem("Learning Innovations/Build/Android/No VR")]
+        [MenuItem("Learning Innovations/Build/Android/No VR/Build")]
         static void BuildAndroid()
         {
             BuildAndroid(new string[] { });
         }
 
-        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard")]
+        [MenuItem("Learning Innovations/Build/Android/No VR/Build and Run")]
+        static void BuildAndroidRun()
+        {
+            SelectAndroidDevice(deviceId =>
+            {
+                if (deviceId != null)
+                {
+                    BuildAndroid(true, true, deviceId, new string[] { });
+                }
+            });   
+        }
+
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard/Build")]
         static void BuildAndroidGoogleCardboard()
         {
             BuildAndroid("cardboard");
         }
 
-        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard and Oculus")]
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard/Build and Run")]
+        static void BuildRunAndroidGoogleCardboard()
+        {
+            SelectAndroidDevice(deviceId =>
+            {
+                if (deviceId != null)
+                {
+                    BuildAndroid(true, true, deviceId, "cardboard");
+                }
+            });
+        }
+
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard and Oculus/Build")]
         static void BuildAndroidGoogleCardboardOculus()
         {
             BuildAndroid("cardboard", "Oculus");
         }
 
-        [MenuItem("Learning Innovations/Build/Android/VR/Oculus")]
+        [MenuItem("Learning Innovations/Build/Android/VR/Google Cardboard and Oculus/Build and Run")]
+        static void BuildRunAndroidGoogleCardboardOculus()
+        {
+            SelectAndroidDevice(deviceId =>
+            {
+                if (deviceId != null)
+                {
+                    BuildAndroid(true, true, deviceId, "cardboard", "Oculus");
+                }
+            });
+        }
+
+        [MenuItem("Learning Innovations/Build/Android/VR/Oculus/Build")]
         static void BuildAndroidOculus()
         {
             BuildAndroid("Oculus");
+        }
 
-
+        [MenuItem("Learning Innovations/Build/Android/VR/Oculus/Build and Run")]
+        static void BuildRunAndroidOculus()
+        {
+            SelectAndroidDevice(deviceId =>
+            {
+                if (deviceId != null)
+                {
+                    BuildAndroid(true, true, deviceId, "Oculus");
+                }
+            });
         }
 
 
@@ -96,7 +141,12 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
         static BuildReport BuildAndroid(params string[] vrSdks)
         {
-            return BuildAndroid(OnAndroidBuildCompleted, vrSdks);
+            return BuildAndroid(x => OnAndroidBuildCompleted(x, false, false, null), vrSdks);
+        }
+
+        static BuildReport BuildAndroid(bool deployOnDevice, bool runOnDevice, string deviceId, params string[] vrSdks)
+        {
+            return BuildAndroid(x => OnAndroidBuildCompleted(x, deployOnDevice, runOnDevice, deviceId), vrSdks);
         }
 
         static BuildReport BuildAndroid(Action<BuildReport> buildCompletionAction, params string[] vrSdks)
@@ -175,41 +225,181 @@ namespace FVTC.LearningInnovations.Unity.Editor
 
         private static void OnAndroidBuildCompleted(BuildReport report)
         {
+            OnAndroidBuildCompleted(report, false, false, null);
+        }
+
+        private static void OnAndroidBuildCompleted(BuildReport report, bool deployOnDevice, bool runOnDevice, string deviceId)
+        {
             if (report.summary.result == BuildResult.Succeeded)
             {
-                DirectoryInfo outputDir = new DirectoryInfo(System.IO.Path.GetDirectoryName(report.summary.outputPath));
-                FileInfo apkFile = new FileInfo(report.summary.outputPath),
-                        obbFile = new FileInfo(System.IO.Path.ChangeExtension(apkFile.FullName, "main.obb"));
+                WriteAndroidAdbInstallScript(report);
 
-                using (var scriptFileStream = new System.IO.FileStream(Path.Combine(outputDir.FullName, "adb-install.cmd"), FileMode.Create, FileAccess.Write))
-                using (var scriptWriter = new System.IO.StreamWriter(scriptFileStream))
+                if (deployOnDevice)
                 {
-                    string packageName = PlayerSettings.applicationIdentifier;
-
-                    scriptWriter.WriteLine("@echo off");
-                    scriptWriter.WriteLine("echo Uninstalling previous APK");
-                    scriptWriter.WriteLine(string.Format("adb uninstall {0}", packageName));
-
-                    scriptWriter.WriteLine("echo Removing previous OBB expansion file");
-                    scriptWriter.WriteLine(string.Format("adb shell rm -r /sdcard/Android/obb/{0}", packageName));
-
-                    scriptWriter.WriteLine("echo Installing new APK");
-                    scriptWriter.WriteLine(string.Format("adb install {0}", apkFile.Name));
-
-
-                    if (obbFile.Exists)
+                    if (DeployOnAndroidDevice(deviceId, report) && runOnDevice)
                     {
-                        scriptWriter.WriteLine("echo Uploading new OBB expansion file");
-
-                        //scriptWriter.WriteLine("FOR /F \"tokens = *USEBACKQ\" %%F IN (`adb shell echo $EXTERNAL_STORAGE`) DO (");
-                        //scriptWriter.WriteLine("SET SDCARD=%%F");
-                        //scriptWriter.WriteLine(")");
-
-                        scriptWriter.WriteLine(string.Format("adb push -p {0} /sdcard/Android/obb/{2}/main.{1}.{2}.obb", obbFile.Name, PlayerSettings.Android.bundleVersionCode, packageName));
+                        RunOnAndroidDevice(deviceId, report);
                     }
-
-                    scriptWriter.WriteLine("pause");
                 }
+            }
+        }
+
+        private static void RunOnAndroidDevice(string deviceId, BuildReport report)
+        {
+            DirectoryInfo androidSdkDir = new DirectoryInfo(EditorPrefs.GetString("AndroidSdkRoot"));
+            FileInfo adbFile = new FileInfo(Path.Combine(androidSdkDir.FullName, "platform-tools", "adb.exe"));
+            string packageName = PlayerSettings.applicationIdentifier;
+
+
+            EditorUtility.DisplayProgressBar($"Starting application on device {deviceId}", "Starting application", 0);
+            Action<string> callback = x =>
+            {
+                EditorUtility.DisplayProgressBar($"Starting application on device {deviceId}", x, 0);
+            };
+
+            ProcessHelper.Start(adbFile.FullName, $"-s {deviceId} shell am start -a android.intent.action.MAIN -n {packageName}/com.unity3d.player.UnityPlayerActivity", callback, callback);
+        }
+
+        private static void SelectAndroidDevice(Action<string> callback)
+        {
+            DirectoryInfo androidSdkDir = new DirectoryInfo(EditorPrefs.GetString("AndroidSdkRoot"));
+            FileInfo adbFile = new FileInfo(Path.Combine(androidSdkDir.FullName, "platform-tools", "adb.exe"));
+
+            List<string> deviceIds = new List<string>();
+
+            Action<string> stdOutCallback = x =>
+            {
+                if (!string.IsNullOrWhiteSpace(x))
+                {
+                    deviceIds.Add(x);
+                }
+            };
+
+            if (ProcessHelper.StartAndWaitForExit(adbFile.FullName, $"devices -l", stdOutCallback))
+            {
+                if (deviceIds.Count > 0)
+                {
+                    deviceIds.RemoveAt(0);
+                }
+
+                Dialog.PromptSelection("Select Device", "Select Android Device", deviceIds, selectedIndex =>
+                {
+                    if (selectedIndex.HasValue)
+                    {
+                        string deviceId = deviceIds[selectedIndex.Value].Split(new char[] {' ', '\t'}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+
+                        callback(deviceId);
+                    }
+                    else
+                    {
+                        callback(null);
+                    }
+                });
+            }
+            else
+            {
+                callback(null);
+            }
+        }
+
+
+        private static bool DeployOnAndroidDevice(string deviceId, BuildReport report)
+        {
+            DirectoryInfo androidSdkDir = new DirectoryInfo(EditorPrefs.GetString("AndroidSdkRoot"));
+            FileInfo adbFile = new FileInfo(Path.Combine(androidSdkDir.FullName, "platform-tools", "adb.exe"));
+
+            // run the adb-install.cmd
+
+            DirectoryInfo outputDir = new DirectoryInfo(System.IO.Path.GetDirectoryName(report.summary.outputPath));
+            FileInfo apkFile = new FileInfo(report.summary.outputPath),
+                obbFile = new FileInfo(System.IO.Path.ChangeExtension(apkFile.FullName, "main.obb"));
+
+            string packageName = PlayerSettings.applicationIdentifier;
+
+            Action<string> ignoreErrorCallback = x => { };
+
+            try
+            {
+                float steps = 3;
+                if (obbFile.Exists) ++steps;
+
+                Action<string> updateProgressBarText = x =>
+                {
+                    EditorUtility.DisplayProgressBar("Uninstalling previous package from device (if exists)", x, 0);
+                };
+
+                EditorUtility.DisplayProgressBar("Deploying to Android Device.", "Uninstalling previous package from device (if exists)", 0);
+                ProcessHelper.StartAndWaitForExit(adbFile.FullName, $"-s {deviceId} uninstall {packageName}", updateProgressBarText, updateProgressBarText);
+
+                updateProgressBarText = x =>
+                {
+                    EditorUtility.DisplayProgressBar("Removing previous OBB expansion file (if exists)", x, 0);
+                };
+
+                EditorUtility.DisplayProgressBar("Deploying to Android Device.", "Removing previous OBB expansion file (if exists)", 1 / steps);
+                ProcessHelper.StartAndWaitForExit(adbFile.FullName, $"-s {deviceId} shell rm -r /sdcard/Android/obb/{packageName}", updateProgressBarText, updateProgressBarText);
+
+
+                bool success;
+
+                updateProgressBarText = x =>
+                {
+                    EditorUtility.DisplayProgressBar("Installing new APK on device.", x, 0);
+                };
+
+                EditorUtility.DisplayProgressBar("Deploying to Android Device.", "Installing new APK", 2 / steps);
+                success = ProcessHelper.StartAndWaitForExit(adbFile.FullName, $"-s {deviceId} install {apkFile.FullName}", updateProgressBarText, updateProgressBarText);
+
+                if (success && obbFile.Exists)
+                {
+                    EditorUtility.DisplayProgressBar("Deploying to Android Device.", "Uploading new OBB expansion file", 3 / steps);
+                    success = ProcessHelper.StartAndWaitForExit(adbFile.FullName, $"-s {deviceId} push -p {obbFile.FullName} /sdcard/Android/obb/{packageName}/main.{PlayerSettings.Android.bundleVersionCode}.{packageName}.obb", updateProgressBarText, updateProgressBarText);
+                }
+
+
+                return success;
+
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+
+
+        private static void WriteAndroidAdbInstallScript(BuildReport report)
+        {
+            DirectoryInfo outputDir = new DirectoryInfo(System.IO.Path.GetDirectoryName(report.summary.outputPath));
+            FileInfo apkFile = new FileInfo(report.summary.outputPath), obbFile = new FileInfo(System.IO.Path.ChangeExtension(apkFile.FullName, "main.obb"));
+
+
+            DirectoryInfo androidSdkDir = new DirectoryInfo(EditorPrefs.GetString("AndroidSdkRoot"));
+            FileInfo adbFile = new FileInfo(Path.Combine(androidSdkDir.FullName, "platform-tools", "adb.exe"));
+
+            using (var scriptFileStream = new System.IO.FileStream(Path.Combine(outputDir.FullName, "adb-install.cmd"), FileMode.Create, FileAccess.Write))
+            using (var scriptWriter = new System.IO.StreamWriter(scriptFileStream))
+            {
+                string packageName = PlayerSettings.applicationIdentifier;
+
+                scriptWriter.WriteLine("@echo off");
+                scriptWriter.WriteLine("echo Uninstalling previous APK");
+                scriptWriter.WriteLine($"{adbFile.FullName} uninstall {packageName}");
+
+                scriptWriter.WriteLine("echo Removing previous OBB expansion file");
+                scriptWriter.WriteLine($"{adbFile.FullName} shell rm -r /sdcard/Android/obb/{packageName}");
+
+                scriptWriter.WriteLine("echo Installing new APK");
+                scriptWriter.WriteLine($"{adbFile.FullName} install {apkFile.Name}");
+
+
+                if (obbFile.Exists)
+                {
+                    scriptWriter.WriteLine("echo Uploading new OBB expansion file");
+                    scriptWriter.WriteLine($"{adbFile.FullName} push -p {obbFile.Name} /sdcard/Android/obb/{packageName}/main.{PlayerSettings.Android.bundleVersionCode}.{packageName}.obb");
+                }
+
+                scriptWriter.WriteLine("pause");
             }
         }
 
@@ -317,21 +507,25 @@ namespace FVTC.LearningInnovations.Unity.Editor
                         buildOutputExe.FullName,
                         buildSettings.BuildTarget,
                         buildOptions);
+            }
+            finally
+            {
+
+                EditorUtility.ClearProgressBar();
 
                 if (buildSettings.PostBuildAction != null)
                 {
                     buildSettings.PostBuildAction(buildReport);
                 }
-            }
-            finally
-            {
+
                 if (oldBuildSettings.BuildTarget != buildSettings.BuildTarget || oldBuildSettings.BuildTargetGroup != buildSettings.BuildTargetGroup)
                 {
                     EditorUtility.DisplayProgressBar("Build", "Switching current build target back to " + buildSettings.BuildTargetGroup.ToString() + " - " + buildSettings.BuildTarget.ToString(), 0f);
                     EditorUserBuildSettings.SwitchActiveBuildTarget(buildSettings.BuildTargetGroup, oldBuildSettings.BuildTarget);
+                    EditorUtility.ClearProgressBar();
                 }
 
-                EditorUtility.ClearProgressBar();
+
 
 #if !UNITY_2019_1_OR_NEWER
                 PlayerSettings.virtualRealitySupported = oldBuildSettings.IsVirtualRealitySupported;
@@ -342,13 +536,7 @@ namespace FVTC.LearningInnovations.Unity.Editor
                 {
                     case BuildResult.Succeeded:
 
-                        if (EditorUtility.DisplayDialog("Build Succeeded", "Do you want to open the build folder?", "Yes", "No"))
-                        {
-                            FileInfo outputFile = new FileInfo(buildReport.summary.outputPath);
-
-                            //System.Diagnostics.Process.Start("explorer.exe", buildOutputDirectory.FullName);
-                            Process.Start("explorer.exe", string.Format("/select, \"{0}\"", outputFile.Exists ? outputFile.FullName : outputFile.Directory.FullName));
-                        }
+                        PromptUserToOpenBuildDirectory(buildReport);
                         break;
                     case BuildResult.Failed:
                         EditorUtility.DisplayDialog("Build Failed", "The build failed :(\r\nSee the console window for details.", "OK");
@@ -362,6 +550,16 @@ namespace FVTC.LearningInnovations.Unity.Editor
             return buildReport;
         }
 
+        private static void PromptUserToOpenBuildDirectory(BuildReport buildReport)
+        {
+            if (EditorUtility.DisplayDialog("Build Succeeded", "Do you want to open the build folder?", "Yes", "No"))
+            {
+                FileInfo outputFile = new FileInfo(buildReport.summary.outputPath);
+
+                //System.Diagnostics.Process.Start("explorer.exe", buildOutputDirectory.FullName);
+                System.Diagnostics.Process.Start("explorer.exe", string.Format("/select, \"{0}\"", outputFile.Exists ? outputFile.FullName : outputFile.Directory.FullName));
+            }
+        }
 
         public class BuildSettings
         {

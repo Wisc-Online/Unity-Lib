@@ -138,5 +138,62 @@ namespace FVTC.LearningInnovations.Unity.Editor
             EditorUtility.DisplayDialog("Error", "See console for error details.", "OK");
         }
 
+
+        public static void PromptSelection(string title, string message, IEnumerable<string> options, Action<int?> callback)
+        {
+            DropdownSelectionWindow window = null;
+
+            window = ScriptableObject.CreateInstance<DropdownSelectionWindow>();
+            window.Message = message;
+            window.titleContent = new GUIContent(title);
+
+            window.Callback = callback;
+            window.Options = options.ToArray();
+            window.position = new Rect(Screen.width / 2, Screen.height / 2, 500, 150);
+            window.ShowModal();
+        }
+
+        class DropdownSelectionWindow : EditorWindow
+        {
+            public string Message { get; set; }
+            public bool MultiLine;
+
+            public string[] Options { get; set; }
+            public int SelectedIndex { get; set; }
+            public Action<int?> Callback { get; internal set; }
+
+            int? _selectedIndex = null;
+
+            private void OnGUI()
+            {
+
+                SelectedIndex = EditorGUILayout.IntPopup(Message, SelectedIndex, Options, Options.Select((x, i) => i).ToArray());
+
+                GUILayout.BeginHorizontal();
+                EditorGUI.BeginDisabledGroup(SelectedIndex < 0);
+                if (GUILayout.Button("OK"))
+                {
+                    _selectedIndex = SelectedIndex;
+                    this.Close();
+                }
+                EditorGUI.EndDisabledGroup();
+
+                if (GUILayout.Button("Cancel"))
+                {
+                    _selectedIndex = null;
+                    this.Close();
+                }
+                GUILayout.EndHorizontal();
+
+                GUIUtility.ExitGUI();
+            }
+
+
+            private void OnDestroy()
+            {
+                Callback(_selectedIndex);
+            }
+        }
+
     }
 }
